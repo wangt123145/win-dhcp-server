@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+
+# 运行时数据：DHCP 租约（含 MAC/IP），勿提交
+leases.json
+
+# 本地虚拟环境 / 环境变量
+venv/
+.venv/
+.env
+
+# 编辑器 / 系统
+.idea/
+.vscode/
+.DS_Store
+
+# 工作区元数据
+.workbuddy/
