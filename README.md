@@ -24,6 +24,7 @@ dhcp_tool/
 ├── winsock_raw.py   # ctypes 封装 WSARecvMsg / WSASendMsg + IP_PKTINFO
 ├── webui.py         # 标准库 http.server 管理页
 ├── config.json      # 配置（地址池 / 掩码 / 网关 / DNS / 租期 / 网口）
+├── build_exe.py     # 一键打包成 Windows 单文件 exe（PyInstaller）
 ├── test_dhcp.py     # 逻辑自测（地址池 + 报文编解码 + winsock 结构校验）
 └── leases.json      # 运行时生成，勿提交（已在 .gitignore）
 ```
@@ -42,6 +43,30 @@ dhcp_tool/
    - 在「当前租约」中实时查看已分配的 IP。
 
 > 注意：必须与同网段现有路由器自带的 DHCP 服务**错开地址段**，否则会抢 IP。
+
+## 方式一：直接下载 exe（免装 Python）
+
+在仓库 **Releases** 页面下载 `win-dhcp-server.exe`（已内嵌默认配置，单文件）。
+**右键 → 以管理员身份运行**，随后浏览器打开 `http://127.0.0.1:8080` 即可使用。
+首次运行会在 exe 同目录生成 `config.json`（可手动编辑）与 `leases.json`（租约数据）。
+
+- 默认已请求管理员权限（UAC 提权），以便绑定特权端口 67。
+- 若被 Windows 防火墙拦截，放行 **UDP 67 / 68 入站** 即可。
+
+## 方式二：从源码运行 / 自行打包
+
+### 运行源码
+```bash
+pip install pyinstaller     # 仅打包时需要
+python main.py
+```
+
+### 打包成单文件 exe
+```bash
+python build_exe.py
+```
+产物位于 `dist/win-dhcp-server.exe`（已带 `--uac-admin` 提权清单）。
+`--onefile` 生成单个可执行文件，`config.json` 会随 exe 一起分发，首次运行自动复制到 exe 同目录。
 
 ## 严格单网口模式说明
 

@@ -19,3 +19,8 @@ venv/
 
 # 工作区元数据
 .workbuddy/
+
+# PyInstaller 打包产物（dist/ 下的 exe 通过 GitHub Release 分发，不入库）
+dist/
+build/
+*.spec

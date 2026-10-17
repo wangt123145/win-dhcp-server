@@ -7,7 +7,9 @@
 """
 import json
 import os
+import shutil
 import socket
+import sys
 import threading
 
 import ipaddress
@@ -16,7 +18,32 @@ from leasepool import LeasePool
 from dhcpserver import DHCPServer
 from webui import start_web
 
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+
+def base_dir():
+    """程序运行目录：打包成 exe 后用 exe 所在目录，源码模式用脚本目录。"""
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+BASE_DIR = base_dir()
+CONFIG_PATH = os.path.join(BASE_DIR, "config.json")
+LEASE_PATH = os.path.join(BASE_DIR, "leases.json")
+
+DEFAULT_CONFIG = {
+    "server_ip": "192.168.1.1",
+    "interface": "0.0.0.0",
+    "interface_index": 0,
+    "subnet": "192.168.1.0",
+    "netmask": "255.255.255.0",
+    "pool_start": "192.168.1.100",
+    "pool_end": "192.168.1.200",
+    "gateway": "192.168.1.1",
+    "dns": ["192.168.1.1", "8.8.8.8"],
+    "lease_time": 3600,
+    "web_host": "127.0.0.1",
+    "web_port": 8080,
+}
 
 
 def load_config(path):
@@ -29,13 +56,24 @@ def save_config(path, cfg):
         json.dump(cfg, f, indent=2, ensure_ascii=False)
 
 
+def ensure_config():
+    """保证配置文件存在：优先用打包进 exe 的默认配置，其次退回内置默认。"""
+    if os.path.exists(CONFIG_PATH):
+        return
+    bundled = os.path.join(getattr(sys, "_MEIPASS", ""), "config.json")
+    if os.path.isfile(bundled):
+        shutil.copyfile(bundled, CONFIG_PATH)
+    else:
+        save_config(CONFIG_PATH, DEFAULT_CONFIG)
+
+
 class App:
     """全局应用状态：持有配置、地址池、DHCP 服务，支持配置热更新。"""
 
     def __init__(self, config_path):
         self.config_path = config_path
         self.config = load_config(config_path)
-        self.pool = LeasePool(self.config)
+        self.pool = LeasePool(self.config, lease_file=LEASE_PATH)
         self.server = None
         self._start_server()
 
@@ -132,6 +170,7 @@ class App:
 
 
 def main():
+    ensure_config()
     app = App(CONFIG_PATH)
     start_web(app)
 
